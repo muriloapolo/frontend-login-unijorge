@@ -48,23 +48,23 @@ export default {
       this.mensagemErro = '';
 
       try {
-        const apiBaseUrl = 'https://backend-fullstack-eight.vercel.app'; // Alteração aqui
+        const apiBaseUrl = 'https://backend-fullstack-eight.vercel.app';
         const response = await axios.post(`${apiBaseUrl}/api/secretarios/login`, {
           email: this.email,
           password: this.password
         });
 
         if (response.status === 200) {
-          const { user, token } = response.data;
+          // Removida a linha que extraía o token
+          const { user } = response.data;
           
-          // Salva o token e o usuário no localStorage
-          localStorage.setItem('authToken', token);
+          // O token não é mais salvo
           localStorage.setItem('user', JSON.stringify(user));
           
           // Marca o usuário como autenticado
           auth.isAuthenticated = true; 
           
-          console.log('Login bem-sucedido! Token armazenado.');
+          console.log('Login bem-sucedido!');
           this.$router.push('/dashboard');
         }
 
