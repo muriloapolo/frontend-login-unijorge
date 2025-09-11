@@ -171,7 +171,7 @@ export default {
     },
     async carregarEspecialidades() {
       try {
-        const response = await axios.get('http://localhost:3000/api/medicos/especialidades');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/medicos/especialidades`);
         this.especialidadesDisponiveis = response.data;
       } catch (error) {
         console.error('Erro ao carregar especialidades:', error);
@@ -181,7 +181,7 @@ export default {
     },
     async carregarMedicos() {
       try {
-        const response = await axios.get(`http://localhost:3000/api/medicos?especialidade=${this.especialidadeSelecionada}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/medicos?especialidade=${this.especialidadeSelecionada}`);
         this.medicosFiltrados = response.data;
         this.medicoSelecionado = null;
         this.horarioSelecionado = '';
@@ -205,7 +205,7 @@ export default {
       
       try {
         const medicoId = this.medicoSelecionado._id;
-        const response = await axios.get(`http://localhost:3000/api/agendamentos/disponibilidade?medicoId=${medicoId}&data=${this.data}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/disponibilidade?medicoId=${medicoId}&data=${this.data}`);
         this.horariosDisponiveis = response.data;
         this.horarioSelecionado = ''; 
         console.log('Horários disponíveis:', this.horariosDisponiveis);

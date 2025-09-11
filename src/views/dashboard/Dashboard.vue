@@ -63,12 +63,12 @@ export default {
     return {
       isMenuOpen: false, 
       agendamentosNaoConfirmados: [
-        { id: 1, paciente: 'Pedro Henrique', cpf: '12345678900', medico: 'Dr. João Silva', data: formattedDate, horario: '09:00', duracao: 60, status: 'pendente' },
-        { id: 2, paciente: 'Fernanda Lima', cpf: '09876543211', medico: 'Dr. João Silva', data: formattedDate, horario: '11:00', duracao: 20, status: 'pendente' },
-        { id: 3, paciente: 'Ana Souza', medico: 'Dra. Maria Oliveira', data: formattedDate, horario: '14:30', duracao: 20, status: 'pendente' },
-        { id: 4, paciente: 'Carlos Pinto', medico: 'Dra. Maria Oliveira', data: '2025-09-09', horario: '10:00', duracao: 20, status: 'pendente' },
-        { id: 5, paciente: 'Juliana Costa', medico: 'Dr. Pedro Martins', data: '2025-09-10', horario: '15:40', duracao: 20, status: 'pendente' },
-        { id: 6, paciente: 'Rodrigo Alves', medico: 'Dr. João Silva', data: formattedYesterday, horario: '10:00', duracao: 30, status: 'pendente' }
+        // { id: 1, paciente: 'Pedro Henrique', cpf: '12345678900', medico: 'Dr. João Silva', data: formattedDate, horario: '09:00', duracao: 60, status: 'pendente' },
+        // { id: 2, paciente: 'Fernanda Lima', cpf: '09876543211', medico: 'Dr. João Silva', data: formattedDate, horario: '11:00', duracao: 20, status: 'pendente' },
+        // { id: 3, paciente: 'Ana Souza', medico: 'Dra. Maria Oliveira', data: formattedDate, horario: '14:30', duracao: 20, status: 'pendente' },
+        // { id: 4, paciente: 'Carlos Pinto', medico: 'Dra. Maria Oliveira', data: '2025-09-09', horario: '10:00', duracao: 20, status: 'pendente' },
+        // { id: 5, paciente: 'Juliana Costa', medico: 'Dr. Pedro Martins', data: '2025-09-10', horario: '15:40', duracao: 20, status: 'pendente' },
+        // { id: 6, paciente: 'Rodrigo Alves', medico: 'Dr. João Silva', data: formattedYesterday, horario: '10:00', duracao: 30, status: 'pendente' }
       ],
       agendamentosConfirmados: []
     };
