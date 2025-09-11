@@ -229,7 +229,7 @@ export default {
         this.isLoading = false;
         return;
       }
-      
+    
       const novoAgendamento = {
         pacienteId: this.pacienteDados._id,
         medicoId: this.medicoSelecionado._id,

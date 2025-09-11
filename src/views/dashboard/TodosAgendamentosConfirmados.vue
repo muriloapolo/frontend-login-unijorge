@@ -121,7 +121,7 @@ export default {
     },
     async cancelarAgendamento(agendamento) {
         try {
-            await axios.put(`http://localhost:3000/api/agendamentos/${agendamento._id}`, { status: 'Cancelado' });
+            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/${agendamento._id}`, { status: 'Cancelado' });
             alert('Agendamento cancelado com sucesso!');
             this.carregarAgendamentosConfirmados(); // Recarrega a lista
         } catch (error) {
