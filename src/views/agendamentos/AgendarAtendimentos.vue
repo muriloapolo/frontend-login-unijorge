@@ -238,7 +238,7 @@ export default {
       };
 
       try {
-        const response = await axios.post('http://localhost:3000/api/agendamentos', novoAgendamento);
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos`, novoAgendamento);
         this.mensagem = response.data.message || 'Atendimento agendado com sucesso!';
         this.sucesso = true;
         this.resetForm();
