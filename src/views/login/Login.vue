@@ -48,7 +48,7 @@ export default {
       this.mensagemErro = '';
 
       try {
-        const apiBaseUrl = 'https://backend-fullstack-eight.vercel.app';
+        const apiBaseUrl = 'https://backend-fullstack-ebon.vercel.app';
         const response = await axios.post(`${apiBaseUrl}/api/secretarios/login`, {
           email: this.email,
           password: this.password
