@@ -44,39 +44,40 @@ export default {
   },
   methods: {
     async handleLogin() {
-      this.isLoading = true;
-      this.mensagemErro = '';
+  this.isLoading = true;
+  this.mensagemErro = '';
 
-      try {
-        const apiBaseUrl = 'https://backend-fullstack-ebon.vercel.app';
-        const response = await axios.post(`${apiBaseUrl}/api/secretarios/login`, {
-          email: this.email,
-          password: this.password
-        });
+  try {
+    const apiBaseUrl = 'https://backend-fullstack-ebon.vercel.app';
+    
+    const response = await axios.post(`${apiBaseUrl}/api/secretarios/login`, {
+      email: this.email,
+      password: this.password
+    });
 
-        if (response.status === 200) {
-          // Removida a linha que extraía o token
-          const { user } = response.data;
-          
-          // O token não é mais salvo
-          localStorage.setItem('user', JSON.stringify(user));
-          
-          // Marca o usuário como autenticado
-          auth.isAuthenticated = true; 
-          
-          console.log('Login bem-sucedido!');
-          this.$router.push('/dashboard');
-        }
-
-      } catch (error) {
-        console.error('Erro no login:', error);
-        this.mensagemErro =
-          error.response?.data?.message ||
-          'Erro ao conectar. Verifique sua conexão ou tente novamente.';
-      } finally {
-        this.isLoading = false;
-      }
+    if (response.status === 200) {
+      const { token, user } = response.data;
+      
+      // Salva no localStorage (CORRIGIDO)
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('isAuthenticated', 'true'); // ← ESTAVA FALTANDO!
+      
+      // Atualiza o estado reativo
+      auth.isAuthenticated = true;
+      
+      console.log('Login bem-sucedido! Redirecionando...');
+      this.$router.push('/dashboard');
     }
+
+  } catch (error) {
+    console.error('Erro no login:', error);
+    this.mensagemErro = error.response?.data?.message || 'Erro ao conectar.';
+  } finally {
+    this.isLoading = false;
+  }
+}
+    
   }
 };
 </script>

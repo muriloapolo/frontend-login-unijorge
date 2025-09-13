@@ -82,13 +82,30 @@ export default {
     this.carregarAgendamentosConfirmados();
   },
   methods: {
+    // Método para obter o token JWT. Ajuste conforme sua lógica de autenticação.
+    getToken() {
+      // Supondo que você tenha o token JWT armazenado em localStorage.
+      // Você pode adaptar para Vuex, Pinia ou outra solução de estado.
+      return localStorage.getItem('token');
+    },
+
     async carregarAgendamentosConfirmados() {
         this.isLoading = true;
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/confirmados`);
+            const token = this.getToken();
+            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/confirmados`, {
+                headers: {
+                    Authorization: `Bearer ${token}` // Incluindo o token no cabeçalho
+                }
+            });
             this.agendamentos = response.data;
         } catch (error) {
             console.error("Erro ao carregar agendamentos confirmados:", error);
+            // Mensagem de erro no modal
+            this.openModal('error', { 
+                title: 'Erro de Carregamento', 
+                message: 'Ocorreu um erro ao carregar os agendamentos. Por favor, tente novamente.' 
+            });
         } finally {
             this.isLoading = false;
         }
@@ -101,11 +118,23 @@ export default {
     openModal(action, item) {
         this.actionToPerform = action;
         this.itemToProcess = item;
+
         if (action === 'cancelar') {
             this.modalTitle = 'Cancelar Agendamento';
             this.modalMessage = `Tem certeza que deseja cancelar o agendamento de ${item.pacienteId.nome} para ${this.formatarDataCard(item.data)} às ${item.horario}?`;
             this.modalConfirmText = 'Sim, Cancelar';
+        } else if (action === 'error') {
+            this.modalTitle = item.title;
+            this.modalMessage = item.message;
+            this.modalConfirmText = 'Fechar';
+            this.actionToPerform = null; // Não há ação a ser confirmada
+        } else if (action === 'success') {
+            this.modalTitle = item.title;
+            this.modalMessage = item.message;
+            this.modalConfirmText = 'OK';
+            this.actionToPerform = null; // Não há ação a ser confirmada
         }
+
         this.showModal = true;
     },
     closeModal() {
@@ -121,12 +150,20 @@ export default {
     },
     async cancelarAgendamento(agendamento) {
         try {
-            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/${agendamento._id}`, { status: 'Cancelado' });
-            alert('Agendamento cancelado com sucesso!');
+            const token = this.getToken();
+            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/${agendamento._id}`, 
+              { status: 'Cancelado' },
+              {
+                headers: {
+                    Authorization: `Bearer ${token}` // Incluindo o token no cabeçalho
+                }
+              }
+            );
+            this.openModal('success', { title: 'Sucesso!', message: 'Agendamento cancelado com sucesso!' });
             this.carregarAgendamentosConfirmados(); // Recarrega a lista
         } catch (error) {
             console.error("Erro ao cancelar agendamento:", error);
-            alert('Erro ao cancelar agendamento. Tente novamente.');
+            this.openModal('error', { title: 'Erro', message: 'Erro ao cancelar agendamento. Tente novamente.' });
         }
     }
   }

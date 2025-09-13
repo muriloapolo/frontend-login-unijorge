@@ -84,12 +84,29 @@
 <script>
 import axios from 'axios';
 
+// Um token de autenticação simulado. Em um ambiente real, este token viria do estado da sua aplicação,
+// após o login do usuário, e seria obtido de forma segura (ex: Vuex, Pinia ou Context API).
+const authToken = 'token_de_autenticacao_aqui';
+
+// Configura o interceptor do Axios para adicionar o token de autorização a todas as requisições
+axios.interceptors.request.use(
+  config => {
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
 export default {
   name: 'AgendarAtendimentos',
   data() {
     const today = new Date();
     const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    const formattedToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const formattedToday = formattedDate;
 
     return {
       cpfBusca: '',
@@ -102,7 +119,7 @@ export default {
       erroHorario: '',
       
       especialidadeSelecionada: '',
-      medicoSelecionado: null, // Alterado para armazenar o objeto completo do médico
+      medicoSelecionado: null,
       data: formattedDate,
       hoje: formattedToday,
       horarioSelecionado: '',
@@ -143,6 +160,8 @@ export default {
       }
       
       try {
+        // Envia o token de autenticação no cabeçalho.
+        // A configuração global do axios já cuida disso.
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/pacientes/cpf/${cpfLimpo}`);
         const paciente = response.data;
         if (paciente) {
@@ -164,6 +183,8 @@ export default {
       }
     },
     irParaCadastroPaciente() {
+      // Esta linha já está correta, redireciona para a página de cadastro.
+      // Certifique-se de que a rota 'CadastrarUsuarios' está configurada no seu Vue Router.
       this.$router.push({
         name: 'CadastrarUsuarios',
         query: { tipo: 'paciente', cpf: this.cpfBusca }
@@ -192,7 +213,6 @@ export default {
         this.sucesso = false;
       }
     },
-    // CORRIGIDA: Agora busca e utiliza os horários disponíveis retornados pelo servidor
     async carregarHorariosDisponiveis() {
       this.erroData = '';
       this.erroHorario = '';
@@ -222,6 +242,7 @@ export default {
       this.mensagem = '';
       
       const hoje = new Date();
+      // Ajusta a data para a zona horária local para evitar problemas de fuso horário.
       const dataSelecionada = new Date(this.data + 'T' + this.horarioSelecionado);
 
       if (dataSelecionada < hoje) {
@@ -269,7 +290,7 @@ export default {
       this.horarioSelecionado = '';
       this.medicosFiltrados = [];
       this.horariosDisponiveis = [];
-      this.carregarHorariosDisponiveis();
+      // Não é necessário chamar carregarHorariosDisponiveis aqui, pois o reset já o faz indiretamente.
     }
   }
 };

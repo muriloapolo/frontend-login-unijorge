@@ -2,9 +2,8 @@
   <div class="dashboard-container">
     <aside class="sidebar" :class="{ 'open': isMenuOpen }">
       <div class="sidebar-header">
-         <button class="close-btn " @click="closeMenu">×</button>
+          <button class="close-btn " @click="closeMenu">×</button>
         <h2 class="sidebar-title">Painel de Controle</h2>
-       
       </div>
       <nav class="sidebar-nav">
         <router-link to="/dashboard/agendamentos" class="nav-item" @click="closeMenu">
@@ -48,32 +47,118 @@
 </template>
 
 <script>
-// A importação de 'auth' não é mais necessária, pois a autenticação é gerenciada pelo localStorage.
-// import { auth } from '../../router'; 
+import axios from 'axios';
 
 export default {
   name: 'Dashboard',
   data() {
-    const today = new Date();
-    const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const formattedYesterday = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-    
     return {
       isMenuOpen: false, 
-      agendamentosNaoConfirmados: [
-        // { id: 1, paciente: 'Pedro Henrique', cpf: '12345678900', medico: 'Dr. João Silva', data: formattedDate, horario: '09:00', duracao: 60, status: 'pendente' },
-        // { id: 2, paciente: 'Fernanda Lima', cpf: '09876543211', medico: 'Dr. João Silva', data: formattedDate, horario: '11:00', duracao: 20, status: 'pendente' },
-        // { id: 3, paciente: 'Ana Souza', medico: 'Dra. Maria Oliveira', data: formattedDate, horario: '14:30', duracao: 20, status: 'pendente' },
-        // { id: 4, paciente: 'Carlos Pinto', medico: 'Dra. Maria Oliveira', data: '2025-09-09', horario: '10:00', duracao: 20, status: 'pendente' },
-        // { id: 5, paciente: 'Juliana Costa', medico: 'Dr. Pedro Martins', data: '2025-09-10', horario: '15:40', duracao: 20, status: 'pendente' },
-        // { id: 6, paciente: 'Rodrigo Alves', medico: 'Dr. João Silva', data: formattedYesterday, horario: '10:00', duracao: 30, status: 'pendente' }
-      ],
+      agendamentosNaoConfirmados: [],
       agendamentosConfirmados: []
     };
   },
+  created() {
+    this.fetchAgendamentos();
+  },
   methods: {
+    async fetchAgendamentos() {
+      const apiBaseUrl = 'https://backend-fullstack-ebon.vercel.app';
+      const token = localStorage.getItem('authToken');
+
+      if (!token) {
+        console.error("Token de autenticação não encontrado.");
+        this.$router.push('/');
+        return;
+      }
+
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
+      try {
+        const [pendingResponse, confirmedResponse] = await Promise.all([
+          axios.get(`${apiBaseUrl}/api/agendamentos/pendentes`, config),
+          axios.get(`${apiBaseUrl}/api/agendamentos/confirmados`, config)
+        ]);
+
+        this.agendamentosNaoConfirmados = pendingResponse.data;
+        this.agendamentosConfirmados = confirmedResponse.data;
+
+        console.log("Dados carregados do backend com sucesso.");
+      } catch (error) {
+        console.error('Erro ao buscar agendamentos:', error);
+        // Em caso de erro, redireciona para o login
+        this.$router.push('/');
+      }
+    },
+    async adicionarAgendamento(novoAgendamento) {
+      const apiBaseUrl = 'https://backend-fullstack-ebon.vercel.app';
+      const token = localStorage.getItem('authToken');
+
+      try {
+        const response = await axios.post(`${apiBaseUrl}/api/agendamentos`, novoAgendamento, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        // Adiciona o agendamento retornado pelo backend
+        this.agendamentosNaoConfirmados.push(response.data);
+        console.log('Agendamento criado e salvo no banco de dados:', response.data);
+      } catch (error) {
+        console.error('Erro ao adicionar agendamento:', error);
+      }
+    },
+    async cancelarAgendamento(agendamento) {
+      const apiBaseUrl = 'https://backend-fullstack-ebon.vercel.app';
+      const token = localStorage.getItem('authToken');
+
+      try {
+        await axios.delete(`${apiBaseUrl}/api/agendamentos/${agendamento.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        this.agendamentosNaoConfirmados = this.agendamentosNaoConfirmados.filter(ag => ag.id !== agendamento.id);
+        console.log('Agendamento cancelado e removido do banco de dados.');
+      } catch (error) {
+        console.error('Erro ao cancelar agendamento:', error);
+      }
+    },
+    async confirmarAgendamento(agendamento) {
+      const apiBaseUrl = 'https://backend-fullstack-ebon.vercel.app';
+      const token = localStorage.getItem('authToken');
+
+      try {
+        await axios.put(`${apiBaseUrl}/api/agendamentos/confirmar/${agendamento.id}`, {}, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        // Move o agendamento na interface
+        const agendamentoParaMover = this.agendamentosNaoConfirmados.find(ag => ag.id === agendamento.id);
+        if (agendamentoParaMover) {
+          agendamentoParaMover.status = 'confirmado';
+          this.agendamentosConfirmados.push(agendamentoParaMover);
+          this.agendamentosNaoConfirmados = this.agendamentosNaoConfirmados.filter(ag => ag.id !== agendamento.id);
+          console.log('Agendamento confirmado e movido no banco de dados.');
+        }
+      } catch (error) {
+        console.error('Erro ao confirmar agendamento:', error);
+      }
+    },
+    async cancelarAgendamentoConfirmado(agendamento) {
+      const apiBaseUrl = 'https://backend-fullstack-ebon.vercel.app';
+      const token = localStorage.getItem('authToken');
+
+      try {
+        await axios.delete(`${apiBaseUrl}/api/agendamentos/${agendamento.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        this.agendamentosConfirmados = this.agendamentosConfirmados.filter(ag => ag.id !== agendamento.id);
+        console.log('Agendamento confirmado cancelado e removido do banco de dados.');
+      } catch (error) {
+        console.error('Erro ao cancelar agendamento confirmado:', error);
+      }
+    },
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen;
     },
@@ -85,32 +170,10 @@ export default {
       this.logout();
     },
     logout() {
-      // Remove o token e os dados do usuário do localStorage
-      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       this.$router.push('/');
       console.log('Usuário deslogado com sucesso.');
-    },
-    adicionarAgendamento(novoAgendamento) {
-      this.agendamentosNaoConfirmados.push(novoAgendamento);
-      console.log('Lista de agendamentos pendentes atualizada:', this.agendamentosNaoConfirmados);
-    },
-    cancelarAgendamento(agendamento) {
-      this.agendamentosNaoConfirmados = this.agendamentosNaoConfirmados.filter(ag => ag.id !== agendamento.id);
-      console.log('Agendamento cancelado e removido da lista de pendentes.');
-    },
-    confirmarAgendamento(agendamento) {
-      const agendamentoParaMover = this.agendamentosNaoConfirmados.find(ag => ag.id === agendamento.id);
-      if (agendamentoParaMover) {
-        agendamentoParaMover.status = 'confirmado';
-        this.agendamentosConfirmados.push(agendamentoParaMover);
-        this.agendamentosNaoConfirmados = this.agendamentosNaoConfirmados.filter(ag => ag.id !== agendamento.id);
-        console.log('Agendamento confirmado e movido para a lista de confirmados.');
-      }
-    },
-    cancelarAgendamentoConfirmado(agendamento) {
-      this.agendamentosConfirmados = this.agendamentosConfirmados.filter(ag => ag.id !== agendamento.id);
-      console.log('Agendamento confirmado cancelado e removido do banco de dados.');
     }
   }
 };
@@ -134,7 +197,7 @@ export default {
 .sidebar-header {
   margin-bottom: 30px;
   text-align: center;
-  position: relative; /* Mantém a posição relativa para o botão absoluto */
+  position: relative; 
 }
 .sidebar-title {
   font-size: 1.5em;
@@ -181,13 +244,11 @@ export default {
   padding: 20px;
   position: relative;
 }
-
-/* Estilos para Mobile */
 .top-bar {
-  display: none; /* Esconde em telas grandes */
+  display: none;
 }
 .backdrop {
-  display: none; /* Esconde a camada de fundo por padrão */
+  display: none; 
 }
 .close-btn{
   display: none;
@@ -197,7 +258,7 @@ export default {
     position: relative;
   }
   .top-bar {
-    display: block; /* Mostra a barra superior em mobile */
+    display: block; 
     position: fixed;
     top: 0;
     left: 0;
@@ -208,7 +269,6 @@ export default {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     z-index: 999;
   }
-
   .sidebar {
     position: fixed;
     z-index: 1000;
@@ -217,16 +277,13 @@ export default {
     height: 100%;
     transform: translateX(-100%);
   }
-
   .sidebar.open {
     transform: translateX(0);
     box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
   }
-  
   .main-content {
-    padding-top: 80px; /* Adiciona espaço para a top-bar */
+    padding-top: 80px; 
   }
-
   .hamburger-btn {
     display: block; 
     background: none;
@@ -243,22 +300,19 @@ export default {
     margin: 5px 0;
     transition: all 0.3s ease-in-out;
   }
-
-
   .close-btn {
     display: block; 
-    background: transparent; /* Fundo transparente */
-    border: none; /* Remove a borda */
+    background: transparent; 
+    border: none; 
     color: #ecf0f1;
     font-size: 2em;
     cursor: pointer;
     line-height: 1;
-    position: absolute; /* Posição absoluta */
-    top: -15px; /* Alinhado ao topo */
-    right: -10px; /* Alinhado à direita */
-    z-index: 1001; /* Garante que fique acima de outros elementos */
+    position: absolute; 
+    top: -15px; 
+    right: -10px; 
+    z-index: 1001; 
   }
-  
   .backdrop {
     display: block;
     position: fixed;

@@ -63,7 +63,6 @@
         <p><strong>Médico:</strong> {{ ag.medicoId ? ag.medicoId.nome : 'Não informado' }}</p>
         <p><strong>Data:</strong> {{ formatarDataCard(ag.data) }}</p>
         <p><strong>Horário:</strong> {{ ag.horario }}</p>
-        <!-- AQUI ESTÁ A MUDANÇA: Agora o status e a classe CSS são dinâmicos -->
         <p class="status-text" :class="getStatusClass(ag.status)">
             Status: {{ getStatusText(ag.status) }}
         </p>
@@ -120,8 +119,6 @@ export default {
       return this.currentDate.toLocaleDateString("pt-BR", options);
     },
     agendamentosFiltrados() {
-      // CORREÇÃO: Filtra por agendamentos com status "pendente" (minúsculo) para corresponder ao servidor.
-      // E garante que a propriedade existe antes de tentar convertê-la para minúscula.
       const agendamentosPendentes = this.agendamentos.filter(ag => ag.status && ag.status.toLowerCase() === 'pendente');
       
       if (!this.cpfBusca) {
@@ -163,12 +160,11 @@ export default {
       this.isLoading = true;
       try {
         const formattedDate = this.formatDateForComparison(this.currentDate);
-        // O endpoint agora busca todos os agendamentos, independentemente do status
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/data/${formattedDate}`);
         this.agendamentos = response.data;
       } catch (error) {
         if (error.response && error.response.status === 404) {
-            this.agendamentos = []; // Limpa a lista se não houver agendamentos
+            this.agendamentos = [];
         } else {
             console.error("Erro ao carregar agendamentos:", error);
             this.mostrarMensagem('Erro ao carregar agendamentos. Tente novamente.', false);
@@ -273,16 +269,14 @@ export default {
         this.sucesso = sucesso;
         setTimeout(() => {
             this.mensagem = '';
-        }, 3000); // A mensagem some após 3 segundos
+        }, 3000);
     },
-    // CORREÇÃO: Utiliza o status em minúsculo para garantir a lógica
     getStatusText(status) {
         if (status && status.toLowerCase() === 'pendente') return 'Pendente';
         if (status && status.toLowerCase() === 'confirmado') return 'Confirmado';
         if (status && status.toLowerCase() === 'cancelado') return 'Cancelado';
         return status;
     },
-    // CORREÇÃO: Utiliza o status em minúsculo para aplicar a classe CSS correta
     getStatusClass(status) {
         switch (status && status.toLowerCase()) {
             case 'pendente':
@@ -475,12 +469,10 @@ export default {
     background-color: #f39c12;
     color: white;
 }
-/* NOVA CLASSE: Para status "Confirmado" */
 .status-text.confirmado {
     background-color: #2ecc71;
     color: white;
 }
-/* NOVA CLASSE: Para status "Cancelado" */
 .status-text.cancelado {
     background-color: #e74c3c;
     color: white;

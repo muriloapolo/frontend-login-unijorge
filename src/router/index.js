@@ -11,9 +11,22 @@ import TodosAgendamentosConfirmados from '../views/dashboard/TodosAgendamentosCo
 
 // Objeto para gerenciar o estado de autenticação reativo
 export const auth = reactive({
-  isAuthenticated: localStorage.getItem('isAuthenticated') === 'true'
-});
+  isAuthenticated: localStorage.getItem('authToken') !== null,
 
+  // Método para verificar autenticação
+  checkAuth() {
+    this.isAuthenticated = localStorage.getItem('authToken') !== null;
+    return this.isAuthenticated;
+  },
+
+  // Método para logout
+  logout() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isAuthenticated');
+    this.isAuthenticated = false;
+  }
+});
 const routes = [
   {
     path: '/',
@@ -63,16 +76,24 @@ const routes = [
     ]
   }
 ];
-
 const router = createRouter({
   history: createWebHistory(),
   routes
 });
 
-// Guardião de Rota: verifica se a rota requer autenticação
+// Guardião de Rota melhorado
 router.beforeEach((to, from, next) => {
+  console.log('Navegando para:', to.path, 'Autenticado:', auth.isAuthenticated);
+
+  // Atualiza o estado de autenticação
+  auth.checkAuth();
+
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    console.log('Acesso negado - redirecionando para login');
     next('/login');
+  } else if (to.path === '/login' && auth.isAuthenticated) {
+    console.log('Já autenticado - redirecionando para dashboard');
+    next('/dashboard');
   } else {
     next();
   }

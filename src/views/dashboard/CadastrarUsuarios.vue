@@ -55,6 +55,7 @@
             type="text"
             id="logradouro"
             v-model="usuario.logradouro"
+            
           />
         </div>
         <div class="form-group-inline">
@@ -134,18 +135,19 @@
       <div v-if="showModal" class="modal-overlay" @click="closeModal">
         <div :class="['modal-content', { 'modal-sucesso': sucesso, 'modal-erro': !sucesso }]" @click.stop>
           <div class="modal-body">
-            <!-- Novo feedback visual com o tipo de usuário -->
             <p v-if="sucesso">
-              <b>{{ tipoUsuario.charAt(0).toUpperCase() + tipoUsuario.slice(1) }}</b> cadastrado com sucesso!
+              <b>{{ tipoUsuario.charAt(0).toUpperCase() + tipoUsuario.slice(1) }}</b> Cadastrado com sucesso!
             </p>
             <p v-else>
-              <b>Cadastrado com sucesso!</b> {{ mensagem }}
+              <b>Erro: {{ mensagem }}</b> 
             </p>
           </div>
           <button class="modal-close-btn" @click="closeModal">OK</button>
         </div>
       </div>
     </transition>
+
+
   </div>
 </template>
 
@@ -156,6 +158,7 @@ export default {
   name: "CadastrarUsuarios",
   data() {
     return {
+      apiBaseUrl: 'https://backend-fullstack-ebon.vercel.app', 
       tipoUsuario: "paciente",
       usuario: {
         nome: "",
@@ -172,8 +175,9 @@ export default {
         cidade: "",
         estado: "",
       },
-      especialidades: ["Cardiologia", "Dermatologia", "Pediatria"],
+      especialidades: ["Cardiologia", "Dermatologia", "Pediatria", "Otorrino"],
       erroCep: "",
+      
       mensagem: "",
       sucesso: false,
       isLoading: false,
@@ -183,6 +187,7 @@ export default {
   },
   watch: {
     tipoUsuario() {
+      // Limpa os dados do formulário ao trocar o tipo de usuário
       this.usuario = {
         nome: "",
         email: "",
@@ -240,6 +245,13 @@ export default {
       this.isLoading = true;
       this.clearFeedback();
 
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        this.showFeedback('Usuário não autenticado. Faça login novamente.', false);
+        this.isLoading = false;
+        return;
+      }
+
       // Validação simples de CPF
       const cpf = this.usuario.cpf.replace(/\D/g, '');
       if (cpf.length !== 11) {
@@ -249,63 +261,65 @@ export default {
       }
 
       try {
-        const url = `${import.meta.env.VITE_API_BASE_URL}/api/${this.tipoUsuario}s/register`;
-        
-        // Estrutura os dados para a API de forma mais limpa
-        const dadosParaApi = { ...this.usuario };
+        // Prepara os dados do usuário para o backend de forma dinâmica
+        let dadosParaApi = {
+          nome: this.usuario.nome,
+          email: this.usuario.email,
+          cpf: this.usuario.cpf,
+        };
 
-        // Remove os campos que não se aplicam ao tipo de usuário
         if (this.tipoUsuario === 'paciente') {
-            delete dadosParaApi.crm;
-            delete dadosParaApi.especialidade;
-            delete dadosParaApi.password;
+          dadosParaApi = {
+            ...dadosParaApi,
+            telefone: this.usuario.telefone,
+            cep: this.usuario.cep,
+            logradouro: this.usuario.logradouro,
+            numero: this.usuario.numero,
+            complemento: this.usuario.complemento,
+            cidade: this.usuario.cidade,
+            estado: this.usuario.estado,
+          };
         } else if (this.tipoUsuario === 'medico') {
-            delete dadosParaApi.telefone;
-            delete dadosParaApi.cep;
-            delete dadosParaApi.logradouro;
-            delete dadosParaApi.numero;
-            delete dadosParaApi.complemento;
-            delete dadosParaApi.cidade;
-            delete dadosParaApi.estado;
-            delete dadosParaApi.password;
+          dadosParaApi = {
+            ...dadosParaApi,
+            crm: this.usuario.crm,
+            especialidade: this.usuario.especialidade,
+
+          };
         } else if (this.tipoUsuario === 'secretario') {
-            delete dadosParaApi.crm;
-            delete dadosParaApi.especialidade;
-            delete dadosParaApi.cep;
-            delete dadosParaApi.logradouro;
-            delete dadosParaApi.numero;
-            delete dadosParaApi.complemento;
-            delete dadosParaApi.cidade;
-            delete dadosParaApi.estado;
+          dadosParaApi = {
+            ...dadosParaApi,
+            telefone: this.usuario.telefone,
+            password: this.usuario.password,
+          };
         }
 
-        const response = await axios.post(url, dadosParaApi);
+        const url = `${this.apiBaseUrl}/api/${this.tipoUsuario}s/register`;
+        const response = await axios.post(url, dadosParaApi, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
-        // Verifica o status da resposta para garantir que foi um sucesso (200-299)
-        if (response.status >= 200 && response.status < 300) {
-            this.showFeedback(`Cadastro de ${this.tipoUsuario} realizado com sucesso!`, true);
-        } else {
-            // Se o backend retorna uma resposta não-sucesso, mas que não lança exceção,
-            // podemos tratar aqui.
-            this.showFeedback(response.data?.message || 'Erro ao cadastrar usuário. Resposta inesperada do servidor.', false);
-        }
-        
+        this.showFeedback(`Cadastro de ${this.tipoUsuario} realizado com sucesso!`, true);
         this.resetForm();
 
-      } catch (error) {
+      } 
+      catch (error) {
         let mensagem = 'Erro ao cadastrar usuário. Verifique sua conexão e tente novamente.';
         if (error.response) {
-            if (error.response.status === 409) {
-                mensagem = 'Este usuário (CPF/CRM) já está cadastrado.';
-            } else {
-                mensagem = error.response.data?.message || `Erro ${error.response.status}: ${error.response.statusText}`;
-            }
+          if (error.response.status === 409) {
+            mensagem = 'Este usuário (Email ou CPF) já está cadastrado.';
+          } else {
+            mensagem = error.response.data?.message || `Erro ${error.response.status}: ${error.response.statusText}`;
+          }
         }
         this.showFeedback(mensagem, false);
         console.error("Erro no cadastro:", error);
       } finally {
         this.isLoading = false;
       }
+        
     },
     resetForm() {
       this.usuario = {
@@ -323,7 +337,7 @@ export default {
         cidade: "",
         estado: "",
       };
-      this.tipoUsuario = "paciente";
+      this.tipoUsuario = this.tipoUsuario;
       this.erroCep = "";
     },
     showFeedback(message, isSuccess) {
