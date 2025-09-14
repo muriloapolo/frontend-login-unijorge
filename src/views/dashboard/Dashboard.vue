@@ -59,15 +59,6 @@ export default {
     };
   },
   created() {
-    // --- NOVO: Lógica de redirecionamento ao recarregar a página ---
-    const caminhoPadrao = '/dashboard/agendamentos';
-    // Verifica se a rota atual não é a página padrão
-    if (this.$route.path !== caminhoPadrao) {
-      // Redireciona o usuário para a rota desejada
-      this.$router.push(caminhoPadrao);
-    }
-    // --- FIM DA LÓGICA DE REDIRECIONAMENTO ---
-
     this.fetchAgendamentos();
   },
   methods: {

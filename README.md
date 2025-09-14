@@ -1,16 +1,11 @@
 # frontend-vue
 
-This template should help get you started developing with Vue 3 in Vite.
+Feito com Vue3
 
-## Recommended IDE Setup
-
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
 
 ## Project Setup
+
+Abra a pasta, instale as dependências
 
 ```sh
 npm install
@@ -21,9 +16,10 @@ npm install
 ```sh
 npm run dev
 ```
+Só abrir o link e colocar o servidor para rodar
 
-### Compile and Minify for Production
+Login e senha para teste:
 
-```sh
-npm run build
-```
+
+Login: teste@teste.com
+Senha: 123456
