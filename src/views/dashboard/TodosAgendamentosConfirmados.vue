@@ -86,7 +86,7 @@ export default {
     getToken() {
       // Supondo que você tenha o token JWT armazenado em localStorage.
       // Você pode adaptar para Vuex, Pinia ou outra solução de estado.
-      return localStorage.getItem('token');
+      return localStorage.getItem('authToken');
     },
 
     async carregarAgendamentosConfirmados() {

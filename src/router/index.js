@@ -50,7 +50,7 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       {
-        path: '',
+        path: 'dashboard',
         redirect: '/dashboard/todos-agendamentos'
       },
       {

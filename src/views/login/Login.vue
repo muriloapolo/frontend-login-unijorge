@@ -67,7 +67,7 @@ export default {
       auth.isAuthenticated = true;
       
       console.log('Login bem-sucedido! Redirecionando...');
-      this.$router.push('/dashboard');
+      this.$router.push('/dashboard/todos-agendamentos');
     }
 
   } catch (error) {

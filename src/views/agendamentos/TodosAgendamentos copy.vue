@@ -38,16 +38,16 @@
     </div>
 
     <div class="busca-container">
-      <input 
-        type="text" 
-        v-model="cpfBusca" 
-        placeholder="Filtrar por CPF..." 
-        class="cpf-search-input"
-      >
+        <input 
+            type="text" 
+            v-model="cpfBusca" 
+            placeholder="Filtrar por CPF..." 
+            class="cpf-search-input"
+        >
     </div>
 
     <div v-if="isLoading" class="loading-message">
-      Carregando agendamentos...
+        Carregando agendamentos...
     </div>
 
     <div v-if="!isLoading" class="agendamentos-list">
@@ -64,28 +64,28 @@
         <p><strong>Data:</strong> {{ formatarDataCard(ag.data) }}</p>
         <p><strong>Horário:</strong> {{ ag.horario }}</p>
         <p class="status-text" :class="getStatusClass(ag.status)">
-          Status: {{ getStatusText(ag.status) }}
+            Status: {{ getStatusText(ag.status) }}
         </p>
         <div class="agendamento-actions">
-          <button @click="openModal('cancelar', ag)" class="action-btn cancel-btn">Cancelar</button>
-          <button @click="openModal('confirmar', ag)" class="action-btn confirm-btn">Confirmar</button>
+            <button @click="openModal('cancelar', ag)" class="action-btn cancel-btn">Cancelar</button>
+            <button @click="openModal('confirmar', ag)" class="action-btn confirm-btn">Confirmar</button>
         </div>
       </div>
     </div>
 
     <div v-if="showModal" class="modal-overlay">
-      <div class="modal-content">
-        <h3>{{ modalTitle }}</h3>
-        <p>{{ modalMessage }}</p>
-        <div class="modal-actions">
-          <button @click="confirmAction" class="action-btn">{{ modalConfirmText }}</button>
-          <button @click="closeModal" class="action-btn cancel-btn">Voltar</button>
+        <div class="modal-content">
+            <h3>{{ modalTitle }}</h3>
+            <p>{{ modalMessage }}</p>
+            <div class="modal-actions">
+                <button @click="confirmAction" class="action-btn">{{ modalConfirmText }}</button>
+                <button @click="closeModal" class="action-btn cancel-btn">Voltar</button>
+            </div>
         </div>
-      </div>
     </div>
 
     <div v-if="mensagem" :class="['alerta', { 'alerta-sucesso': sucesso, 'alerta-erro': !sucesso }]">
-      {{ mensagem }}
+        {{ mensagem }}
     </div>
   </div>
 </template>
@@ -160,39 +160,14 @@ export default {
       this.isLoading = true;
       try {
         const formattedDate = this.formatDateForComparison(this.currentDate);
-        
-        // Passo 1: Obter o token do localStorage
-        const token = localStorage.getItem('authToken');
-        
-        // Linha de depuração para verificar o token no console
-   
-
-        if (!token) {
-          console.error("Token de autenticação não encontrado.");
-          this.agendamentos = [];
-          this.isLoading = false;
-          return;
-        }
-
-        // Passo 2: Criar o objeto de cabeçalhos
-        const headers = {
-          'Authorization': `Bearer ${token}`
-        };
-
-        // Passo 3: Adicionar os cabeçalhos à sua requisição
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/data/${formattedDate}`, { headers });
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/data/${formattedDate}`);
         this.agendamentos = response.data;
       } catch (error) {
         if (error.response && error.response.status === 404) {
-          this.agendamentos = [];
-        } else if (error.response && error.response.status === 401) {
-          // Trata especificamente o erro 401
-          this.mostrarMensagem('Sessão expirada ou não autenticada. Por favor, faça login novamente.', false);
-          // Opcional: Redirecionar para a página de login
-          // this.$router.push('/login');
+            this.agendamentos = [];
         } else {
-          console.error("Erro ao carregar agendamentos:", error);
-          this.mostrarMensagem('Erro ao carregar agendamentos. Tente novamente.', false);
+            console.error("Erro ao carregar agendamentos:", error);
+            this.mostrarMensagem('Erro ao carregar agendamentos. Tente novamente.', false);
         }
       } finally {
         this.isLoading = false;
@@ -271,9 +246,7 @@ export default {
     },
     async cancelarAgendamento(agendamento) {
         try {
-            const token = localStorage.getItem('authToken');
-            const headers = { 'Authorization': `Bearer ${token}` };
-            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/${agendamento._id}`, { status: 'Cancelado' }, { headers });           
+            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/${agendamento._id}`, { status: 'Cancelado' });
             this.mostrarMensagem('Agendamento cancelado com sucesso!', true);
             this.carregarAgendamentosDoDia();
         } catch (error) {
@@ -283,9 +256,7 @@ export default {
     },
     async confirmarAgendamento(agendamento) {
         try {
-            const token = localStorage.getItem('authToken');
-            const headers = { 'Authorization': `Bearer ${token}` };
-            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/${agendamento._id}`, { status: 'Confirmado' }, { headers });
+            await axios.put(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/${agendamento._id}`, { status: 'Confirmado' });
             this.mostrarMensagem('Agendamento confirmado com sucesso!', true);
             this.carregarAgendamentosDoDia();
         } catch (error) {

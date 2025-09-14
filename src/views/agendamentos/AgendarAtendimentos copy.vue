@@ -84,6 +84,23 @@
 <script>
 import axios from 'axios';
 
+// Um token de autenticação simulado. Em um ambiente real, este token viria do estado da sua aplicação,
+// após o login do usuário, e seria obtido de forma segura (ex: Vuex, Pinia ou Context API).
+const authToken = 'token_de_autenticacao_aqui';
+
+// Configura o interceptor do Axios para adicionar o token de autorização a todas as requisições
+axios.interceptors.request.use(
+  config => {
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
 export default {
   name: 'AgendarAtendimentos',
   data() {
@@ -120,10 +137,6 @@ export default {
     this.carregarEspecialidades();
   },
   methods: {
-    // Método auxiliar para obter o token do localStorage
-    getToken() {
-      return localStorage.getItem('authToken');
-    },
     async buscarPacientePorCpf() {
       this.isLoading = true;
       this.pacienteEncontrado = false;
@@ -132,14 +145,6 @@ export default {
       this.pacienteDados = {};
       this.erroCpf = '';
       this.mensagem = '';
-
-      const token = this.getToken();
-      if (!token) {
-        this.isLoading = false;
-        this.mensagem = 'Erro de autenticação. Por favor, faça login novamente.';
-        this.sucesso = false;
-        return;
-      }
 
       const cpfLimpo = this.cpfBusca.replace(/\D/g, '');
 
@@ -155,11 +160,9 @@ export default {
       }
       
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/pacientes/cpf/${cpfLimpo}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        // Envia o token de autenticação no cabeçalho.
+        // A configuração global do axios já cuida disso.
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/pacientes/cpf/${cpfLimpo}`);
         const paciente = response.data;
         if (paciente) {
           this.pacienteEncontrado = true;
@@ -180,25 +183,16 @@ export default {
       }
     },
     irParaCadastroPaciente() {
+      // Esta linha já está correta, redireciona para a página de cadastro.
+      // Certifique-se de que a rota 'CadastrarUsuarios' está configurada no seu Vue Router.
       this.$router.push({
         name: 'CadastrarUsuarios',
         query: { tipo: 'paciente', cpf: this.cpfBusca }
       });
     },
     async carregarEspecialidades() {
-      const token = this.getToken();
-      if (!token) {
-        this.mensagem = 'Erro de autenticação. Por favor, faça login novamente.';
-        this.sucesso = false;
-        return;
-      }
-
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/medicos/especialidades`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/medicos/especialidades`);
         this.especialidadesDisponiveis = response.data;
       } catch (error) {
         console.error('Erro ao carregar especialidades:', error);
@@ -207,19 +201,8 @@ export default {
       }
     },
     async carregarMedicos() {
-      const token = this.getToken();
-      if (!token) {
-        this.mensagem = 'Erro de autenticação. Por favor, faça login novamente.';
-        this.sucesso = false;
-        return;
-      }
-
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/medicos?especialidade=${this.especialidadeSelecionada}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/medicos?especialidade=${this.especialidadeSelecionada}`);
         this.medicosFiltrados = response.data;
         this.medicoSelecionado = null;
         this.horarioSelecionado = '';
@@ -239,21 +222,10 @@ export default {
         this.horarioSelecionado = '';
         return;
       }
-
-      const token = this.getToken();
-      if (!token) {
-        this.mensagem = 'Erro de autenticação. Por favor, faça login novamente.';
-        this.sucesso = false;
-        return;
-      }
       
       try {
         const medicoId = this.medicoSelecionado._id;
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/disponibilidade?medicoId=${medicoId}&data=${this.data}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos/disponibilidade?medicoId=${medicoId}&data=${this.data}`);
         this.horariosDisponiveis = response.data;
         this.horarioSelecionado = ''; 
         console.log('Horários disponíveis:', this.horariosDisponiveis);
@@ -268,16 +240,9 @@ export default {
       this.erroData = '';
       this.erroHorario = '';
       this.mensagem = '';
-
-      const token = this.getToken();
-      if (!token) {
-        this.isLoading = false;
-        this.mensagem = 'Erro de autenticação. Por favor, faça login novamente.';
-        this.sucesso = false;
-        return;
-      }
       
       const hoje = new Date();
+      // Ajusta a data para a zona horária local para evitar problemas de fuso horário.
       const dataSelecionada = new Date(this.data + 'T' + this.horarioSelecionado);
 
       if (dataSelecionada < hoje) {
@@ -294,11 +259,7 @@ export default {
       };
 
       try {
-        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos`, novoAgendamento, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/agendamentos`, novoAgendamento);
         this.mensagem = response.data.message || 'Atendimento agendado com sucesso!';
         this.sucesso = true;
         this.resetForm();
@@ -329,6 +290,7 @@ export default {
       this.horarioSelecionado = '';
       this.medicosFiltrados = [];
       this.horariosDisponiveis = [];
+      // Não é necessário chamar carregarHorariosDisponiveis aqui, pois o reset já o faz indiretamente.
     }
   }
 };
