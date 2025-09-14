@@ -93,7 +93,7 @@ router.beforeEach((to, from, next) => {
     next('/login');
   } else if (to.path === '/login' && auth.isAuthenticated) {
     console.log('Já autenticado - redirecionando para dashboard');
-    next('/dashboard');
+    next('/dashboard/todos-agendamentos');
   } else {
     next();
   }
